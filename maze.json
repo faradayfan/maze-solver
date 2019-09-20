@@ -1,0 +1,37 @@
+{
+  "dimensions": ["x", "y"],
+  "size": 5,
+  "spaces": [
+    { "x": 0, "y": 0, "moves": "X" },
+    { "x": 0, "y": 1, "moves": "XY" },
+    { "x": 0, "y": 2, "moves": "yY" },
+    { "x": 0, "y": 3, "moves": "yY" },
+    { "x": 0, "y": 4, "moves": "Xy" },
+    { "x": 1, "y": 0, "moves": "xX" },
+    { "x": 1, "y": 1, "moves": "xY" },
+    { "x": 1, "y": 2, "moves": "yY" },
+    { "x": 1, "y": 3, "moves": "Xy" },
+    { "x": 1, "y": 4, "moves": "xX" },
+    { "x": 2, "y": 0, "moves": "xXY" },
+    { "x": 2, "y": 1, "moves": "y" },
+    { "x": 2, "y": 2, "moves": "XY" },
+    { "x": 2, "y": 3, "moves": "xy" },
+    { "x": 2, "y": 4, "moves": "xX" },
+    { "x": 3, "y": 0, "moves": "xXY" },
+    { "x": 3, "y": 1, "moves": "yY" },
+    { "x": 3, "y": 2, "moves": "xyY" },
+    { "x": 3, "y": 3, "moves": "y" },
+    { "x": 3, "y": 4, "moves": "xX" },
+    { "x": 4, "y": 0, "moves": "xY" },
+    { "x": 4, "y": 1, "moves": "y" },
+    { "x": 4, "y": 2, "moves": "Y" },
+    { "x": 4, "y": 3, "moves": "yY" },
+    { "x": 4, "y": 4, "moves": "xy" }
+  ],
+  "start": "(3,0)",
+  "end": "(4,2)",
+  "prizes": {
+    "(0,0)": 4,
+    "(4,1)": 8
+  }
+}
