@@ -3,15 +3,20 @@ const input = require('./maze.json')
 const visited = []
 
 const isVisited = (coord) => {
-  return visited.reduce(v => {
-    
-  })
+  return visited.reduce((a, v) => {
+    return isSame(v, coord) && a
+  }, true)
 }
 
 const addVisited = (coord) => {
   visited.push(coord)
 }
 
+const isSame = (coord1, coord2) => {
+  Object.keys(coord1).reduce((a, c) => {
+    return coord1[c] === coord2[c] && a
+  }, true)
+}
 
 const generateMover = (dimensions) => {
   return dimensions.reduce((a, d)=> {
@@ -29,15 +34,15 @@ const convertCoord = (dimensions, coord) => {
   }, {})
 }
 
-const solvePath = (currentPos, path) => {
+const solvePath = (currentPos, endPos, path, spaces, mover) => {
   if(isVisited(currentPos))
     return null
-  else if(isEnd(currentPos))
+  else if(isSame(currentPos, endPos))
     return path
   else
     addVisited(currentPos)
-    return getMoves(currentPos)
-      .map(d => solvePath(mover[d](currentPos)), d, maze)
+    return getMoves(currentPos, spaces)
+      .map(d => solvePath(mover[d](currentPos)), endPos, path + d, spaces, mover)
       .filter(p => p)
 }
 
@@ -45,8 +50,9 @@ const solve = ({dimensions, size, spaces, start, end, prizes}) => {
   const mover = generateMover(dimensions)
   const startPos = convertCoord(dimensions, start)
   const endPos = convertCoord(dimensions, end)
+  const path = solvePath(startPos, endPos, "", spaces, mover)
   
-  console.log(newCoords)  
+  console.log(path)  
 }
 
 
