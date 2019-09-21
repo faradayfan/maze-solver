@@ -1,27 +1,48 @@
-const input = require('./maze.json')
-const testInput = require('./test-maze-1.json')
+const testInput = require('./maze.json')
+// const testInput = require('./test-maze-1.json')
 
-let visited = []
+class Visiter {
+  constructor(){
+    this.visited = []
+  }
 
-const isVisited = (coord) => {
-  const result = visited.reduce((a, v) => {
-    return isSame(v, coord) || a
-  }, false)
-  return result
+  isVisited(coord) {
+    return this.visited.reduce((a, v) => {
+      return isSame(v, coord) || a
+    }, false)
+  }
+  
+  addVisited(coord) {
+    this.visited.push(coord)
+  }
+  
+  flushVisted() {
+    this.visited = []
+  }
 }
 
-const addVisited = (coord) => {
-  visited.push(coord)
-}
+class Coordinate {
+  constructor(dimensions, position){
+    this.dimensions = dimensions
+    this.position = position
+    this.coordinate = this.posToCoord(position)
+  }
 
-const flushVisted = () => {
-  visited = []
+  posToCoord(pos){
+    const prep = pos.replace("(", "").replace(")", "").split(",")
+    return prep.reduce((a, c, i)=>{
+      a[this.dimensions[i]] = parseInt(c)
+      return a
+    }, { key: pos})
+  }
+
+  isSame(coord){
+    return Object.keys(this.coordinate).reduce((a, c) => this.coordinate[c] === coord[c] && a)
+  }
 }
 
 const isSame = (coord1, coord2) => {
-  return Object.keys(coord1).reduce((a, c) => {
-    return coord1[c] === coord2[c] && a
-  }, true)
+  return Object.keys(coord1).reduce((a, c) => c !== 'key' ? coord1[c] === coord2[c] && a : a, true)
 }
 
 const generateMover = (dimensions) => {
@@ -46,86 +67,62 @@ const posToCoord = (dimensions, pos) => {
   return prep.reduce((a, c, i)=>{
     a[dimensions[i]] = parseInt(c)
     return a
-  }, {})
+  }, { key: pos})
 }
 
 const coordToPos = (dimensions, coord) => `(${dimensions.map(d => coord[d]).join(',')})`
 
-const solvePath = (currentCoord, endCoord, path, spaces, mover) => {
-  if(isVisited(currentCoord))
+const solvePath = (currentCoord, endCoord, path, spaces, mover, visiter = new Visiter()) => {
+  
+  if(visiter.isVisited(currentCoord))
     return null
   else if(isSame(currentCoord, endCoord))
     return path
   else
-    addVisited(currentCoord)
+    visiter.addVisited(currentCoord)
     return getMoves(currentCoord, spaces)
-      .map(d => solvePath(mover[d](currentCoord), endCoord, path + d, spaces, mover))
+      .map(d => solvePath(mover[d](currentCoord), endCoord, path + d, spaces, mover, visiter))
       .filter(p => !!p)
       .reduce((a, c) => a == "" || a.length > c.length ? c : a, "")
-}
-
-const collectAllPrizes = (startCoord, mover, dimensions, spaces, prizes) => {
-  const prizesCoords = Object.keys(prizes).map(p => ({
-    coord: posToCoord(dimensions, p),
-    prize: prizes[p],
-    key: p
-  }))
-  let currentCoord = startCoord
-  let currentPath = ""
-  while(prizesCoords.length) {
-    const foundPrize = prizesCoords.map(({coord, ...rest}) => {
-      const path = solvePath(currentCoord, coord, "", spaces, mover)
-      return {
-        path,
-        coord,
-        ...rest
-      }  
-    }).filter(p => p && !!p.path)
-    .map(({path, prize, ...rest}) => ({
-      path,
-      prize,
-      cost: path.length,
-      gain: prize - path.length,
-      ...rest
-    })).reduce((a, c) => a.gain < c.gain ? c : a)
-    flushVisted()
-    console.log({foundPrize})
-    currentCoord = foundPrize.coord
-    currentPath = currentPath + foundPrize.path
-    prizesCoords.splice(prizesCoords.findIndex(p => isSame(p.coord, foundPrize.coord)), 1)
-  }
-
-  return {
-    currentCoord: currentCoord,
-    path: currentPath
-  }
 }
 
 const mapPrizes = (dimensions, prizes)=>{
   return Object.keys(prizes).map(p => ({
     coord: posToCoord(dimensions, p),
     prize: prizes[p],
-    key: p
   }))
 }
 
+const calcEstCost = (startCoord, coord, endCoord, spaces, mover)=>{
+  const startToCoord = solvePath(startCoord, coord, "", spaces, mover)
+  const coordToEnd = solvePath(coord, endCoord, "", spaces, mover)
+  return startToCoord.length + coordToEnd.length
+}
 
-
-
-
+const calcDistance = (coord1, coord2, dimensions) => {
+  return Math.sqrt(dimensions.map(d => coord2[d] - coord1[d]).map(d => d * d).reduce((a, c) => a + c, 0))
+}
 
 const solve = ({dimensions, size, spaces, start, end, prizes}) => {
   const mover = generateMover(dimensions)
   const startCoord = posToCoord(dimensions, start)
   const endCoord = posToCoord(dimensions, end)
   const mappedPrizes = mapPrizes(dimensions, prizes)
+  const distanceIndicies = {
+    [start]: {
+      [end]: calcDistance(startCoord, endCoord, dimensions),
+      ...mappedPrizes.reduce((a, c) => {
+        return {
+          ...a,
+          [c.coord.key]: calcDistance(startCoord, c.coord, dimensions)
+        }
+      }, {})
+    }
+  }
+
+  console.log(distanceIndicies)
   
-
-
-
-  console.log(mappedPrizes)
   
-
   return solvePath(startCoord, endCoord, "", spaces, mover)
 }
 
