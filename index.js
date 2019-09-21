@@ -41,38 +41,40 @@ const getMoves = (coord, spaces) => {
   }, [])
 }
 
-const convertCoord = (dimensions, coord) => {
-  const prep = coord.replace("(", "").replace(")", "").split(",")
+const posToCoord = (dimensions, pos) => {
+  const prep = pos.replace("(", "").replace(")", "").split(",")
   return prep.reduce((a, c, i)=>{
     a[dimensions[i]] = parseInt(c)
     return a
   }, {})
 }
 
-const solvePath = (currentPos, endPos, path, spaces, mover) => {
-  if(isVisited(currentPos))
+const coordToPos = (dimensions, coord) => `(${dimensions.map(d => coord[d]).join(',')})`
+
+const solvePath = (currentCoord, endCoord, path, spaces, mover) => {
+  if(isVisited(currentCoord))
     return null
-  else if(isSame(currentPos, endPos))
+  else if(isSame(currentCoord, endCoord))
     return path
   else
-    addVisited(currentPos)
-    return getMoves(currentPos, spaces)
-      .map(d => solvePath(mover[d](currentPos), endPos, path + d, spaces, mover))
+    addVisited(currentCoord)
+    return getMoves(currentCoord, spaces)
+      .map(d => solvePath(mover[d](currentCoord), endCoord, path + d, spaces, mover))
       .filter(p => !!p)
       .reduce((a, c) => a == "" || a.length > c.length ? c : a, "")
 }
 
-const collectAllPrizes = (startPos, mover, dimensions, spaces, prizes) => {
-  const prizesPoss = Object.keys(prizes).map(p => ({
-    coord: convertCoord(dimensions, p),
+const collectAllPrizes = (startCoord, mover, dimensions, spaces, prizes) => {
+  const prizesCoords = Object.keys(prizes).map(p => ({
+    coord: posToCoord(dimensions, p),
     prize: prizes[p],
     key: p
   }))
-  let currentPos = startPos
+  let currentCoord = startCoord
   let currentPath = ""
-  while(prizesPoss.length) {
-    const foundPrize = prizesPoss.map(({coord, ...rest}) => {
-      const path = solvePath(currentPos, coord, "", spaces, mover)
+  while(prizesCoords.length) {
+    const foundPrize = prizesCoords.map(({coord, ...rest}) => {
+      const path = solvePath(currentCoord, coord, "", spaces, mover)
       return {
         path,
         coord,
@@ -88,24 +90,43 @@ const collectAllPrizes = (startPos, mover, dimensions, spaces, prizes) => {
     })).reduce((a, c) => a.gain < c.gain ? c : a)
     flushVisted()
     console.log({foundPrize})
-    currentPos = foundPrize.coord
+    currentCoord = foundPrize.coord
     currentPath = currentPath + foundPrize.path
-    prizesPoss.splice(prizesPoss.findIndex(p => isSame(p.coord, foundPrize.coord)), 1)
+    prizesCoords.splice(prizesCoords.findIndex(p => isSame(p.coord, foundPrize.coord)), 1)
   }
 
   return {
-    currentPos,
+    currentCoord: currentCoord,
     path: currentPath
   }
 }
 
+const mapPrizes = (dimensions, prizes)=>{
+  return Object.keys(prizes).map(p => ({
+    coord: posToCoord(dimensions, p),
+    prize: prizes[p],
+    key: p
+  }))
+}
+
+
+
+
+
 
 const solve = ({dimensions, size, spaces, start, end, prizes}) => {
   const mover = generateMover(dimensions)
-  const startPos = convertCoord(dimensions, start)
-  const endPos = convertCoord(dimensions, end)
+  const startCoord = posToCoord(dimensions, start)
+  const endCoord = posToCoord(dimensions, end)
+  const mappedPrizes = mapPrizes(dimensions, prizes)
+  
 
-  return solvePath(startPos, endPos, "", spaces, mover)
+
+
+  console.log(mappedPrizes)
+  
+
+  return solvePath(startCoord, endCoord, "", spaces, mover)
 }
 
 
