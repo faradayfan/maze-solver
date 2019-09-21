@@ -1,6 +1,7 @@
 const input = require('./maze.json')
+const testInput = require('./test-maze-1.json')
 
-const visited = []
+let visited = []
 
 const isVisited = (coord) => {
   const result = visited.reduce((a, v) => {
@@ -11,6 +12,10 @@ const isVisited = (coord) => {
 
 const addVisited = (coord) => {
   visited.push(coord)
+}
+
+const flushVisted = () => {
+  visited = []
 }
 
 const isSame = (coord1, coord2) => {
@@ -53,17 +58,55 @@ const solvePath = (currentPos, endPos, path, spaces, mover) => {
     addVisited(currentPos)
     return getMoves(currentPos, spaces)
       .map(d => solvePath(mover[d](currentPos), endPos, path + d, spaces, mover))
-      .filter(p => !!p)[0]
+      .filter(p => !!p)
+      .reduce((a, c) => a == "" || a.length > c.length ? c : a, "")
 }
+
+const collectAllPrizes = (startPos, mover, dimensions, spaces, prizes) => {
+  const prizesPoss = Object.keys(prizes).map(p => ({
+    coord: convertCoord(dimensions, p),
+    prize: prizes[p],
+    key: p
+  }))
+  let currentPos = startPos
+  let currentPath = ""
+  while(prizesPoss.length) {
+    const foundPrize = prizesPoss.map(({coord, ...rest}) => {
+      const path = solvePath(currentPos, coord, "", spaces, mover)
+      return {
+        path,
+        coord,
+        ...rest
+      }  
+    }).filter(p => p && !!p.path)
+    .map(({path, prize, ...rest}) => ({
+      path,
+      prize,
+      cost: path.length,
+      gain: prize - path.length,
+      ...rest
+    })).reduce((a, c) => a.gain < c.gain ? c : a)
+    flushVisted()
+    console.log({foundPrize})
+    currentPos = foundPrize.coord
+    currentPath = currentPath + foundPrize.path
+    prizesPoss.splice(prizesPoss.findIndex(p => isSame(p.coord, foundPrize.coord)), 1)
+  }
+
+  return {
+    currentPos,
+    path: currentPath
+  }
+}
+
 
 const solve = ({dimensions, size, spaces, start, end, prizes}) => {
   const mover = generateMover(dimensions)
   const startPos = convertCoord(dimensions, start)
   const endPos = convertCoord(dimensions, end)
-  const path = solvePath(startPos, endPos, "", spaces, mover)
-  
-  console.log({path})  
+
+  return solvePath(startPos, endPos, "", spaces, mover)
 }
 
 
-solve(input)
+console.log(solve(testInput))
