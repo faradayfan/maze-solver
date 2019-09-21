@@ -13,7 +13,7 @@ const addVisited = (coord) => {
 }
 
 const isSame = (coord1, coord2) => {
-  Object.keys(coord1).reduce((a, c) => {
+  return Object.keys(coord1).reduce((a, c) => {
     return coord1[c] === coord2[c] && a
   }, true)
 }
@@ -24,6 +24,15 @@ const generateMover = (dimensions) => {
     a[d.toLowerCase()] = ({[d]: v, ...rest}) => ({[d]: v - 1, ...rest})
     return a
   }, {})
+}
+
+const getMoves = (coord, spaces) => {
+  return spaces.reduce((a, c) => {
+    if(isSame(coord, c)){
+      return c.moves.split('')
+    }else
+      return a
+  }, [])
 }
 
 const convertCoord = (dimensions, coord) => {
@@ -52,7 +61,7 @@ const solve = ({dimensions, size, spaces, start, end, prizes}) => {
   const endPos = convertCoord(dimensions, end)
   const path = solvePath(startPos, endPos, "", spaces, mover)
   
-  console.log(path)  
+  console.log(getMoves(startPos, spaces))  
 }
 
 
